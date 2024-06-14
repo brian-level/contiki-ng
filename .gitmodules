@@ -43,3 +43,6 @@
 [submodule "arch/cpu/gecko/lib/gecko_sdk"]
 	path = arch/cpu/gecko/lib/gecko_sdk
 	url = https://github.com/SiliconLabs/gecko_sdk.git
+[submodule "arch/cpu/gecko2/lib/gecko_sdk"]
+	path = arch/cpu/gecko2/lib/gecko_sdk
+	url = git@github.com:SiliconLabs/gecko_sdk.git
