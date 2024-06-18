@@ -45,6 +45,7 @@
 #include "sl_rail_util_rssi.h"
 #include "rail.h"
 #include "rail_ieee802154.h"
+#include "sl_sleeptimer.h"
 
 /* Log configuration */
 #include "sys/log.h"
@@ -88,7 +89,7 @@ static union {
   RAIL_FIFO_ALIGNMENT_TYPE align[RAIL_FIFO_SIZE / RAIL_FIFO_ALIGNMENT];
   uint8_t fifo[RAIL_FIFO_SIZE];
 } sRailRxFifo;
-static RAIL_Handle_t sRailHandle = NULL;
+static RAIL_Handle_t sRailHandle = RAIL_EFR32_HANDLE;
 static RAIL_Time_t last_rx_time = 0;
 static int16_t last_rssi;
 static int16_t last_lqi;
@@ -139,7 +140,15 @@ static int channel = IEEE802154_DEFAULT_CHANNEL;
 static int cca_threshold = -85;
 static RAIL_TxOptions_t txOptions = RAIL_TX_OPTIONS_DEFAULT;
 volatile tx_status_t tx_status;
-volatile bool is_receiving = false;
+volatile int64_t is_receiving = 0;
+/*---------------------------------------------------------------------------*/
+static int64_t uptime_get( void )
+{
+    int64_t elapsed = 0;
+    uint64_t ticks = sl_sleeptimer_get_tick_count64();
+    sl_sleeptimer_tick64_to_ms(ticks, &elapsed);
+    return elapsed;
+}
 /*---------------------------------------------------------------------------*/
 RAIL_Status_t
 RAILCb_SetupRxFifo(RAIL_Handle_t railHandle)
@@ -272,7 +281,7 @@ rail_events_cb(RAIL_Handle_t rail_handle, RAIL_Events_t events)
                | RAIL_EVENT_RX_PACKET_ABORTED
                | RAIL_EVENT_RX_FRAME_ERROR
                | RAIL_EVENT_RX_PACKET_RECEIVED)) {
-    is_receiving = false;
+    is_receiving = 0;
     if(events & RAIL_EVENT_RX_PACKET_RECEIVED) {
       RAIL_HoldRxPacket(rail_handle);
       if(!poll_mode) {
@@ -292,7 +301,7 @@ rail_events_cb(RAIL_Handle_t rail_handle, RAIL_Events_t events)
   }
 
   if(events & (RAIL_EVENT_RX_SYNC1_DETECT | RAIL_EVENT_RX_SYNC2_DETECT)) {
-    is_receiving = true;
+    is_receiving = uptime_get();
   }
 
   if(events & RAIL_EVENT_CAL_NEEDED) {
@@ -478,7 +487,7 @@ get_value(radio_param_t param, radio_value_t *value)
     *value = channel;
     return RADIO_RESULT_OK;
   case RADIO_CONST_MAX_PAYLOAD_LEN:
-    *value = RAIL_FIFO_SIZE;
+    *value = RAIL_FIFO_SIZE - 8;
     return RADIO_RESULT_OK;
   case RADIO_PARAM_RX_MODE:
     *value = 0;
@@ -674,6 +683,8 @@ transmit(unsigned short transmit_len)
   } else {
     /* Wait for the transmission. */
     while(tx_status == TX_SENDING);
+
+
   }
 
   if(tx_status == TX_SENT) {
@@ -714,7 +725,18 @@ off(void)
 static int
 receiving_packet(void)
 {
-  return is_receiving;
+  if (!is_receiving)
+  {
+    return false;
+  }
+
+  if ((uptime_get() - is_receiving) > 400)
+  {
+    LOG_INFO("rx state timedout");
+    is_receiving = 0;
+  }
+
+  return is_receiving != 0;
 }
 /*---------------------------------------------------------------------------*/
 static int
@@ -750,6 +772,15 @@ pending_packet(void)
   handle_receive();
 
   return has_packet();
+}
+/*---------------------------------------------------------------------------*/
+uint32_t efr32_rail_entropy(void)
+{
+  uint32_t entropy = 0;
+  if(sRailHandle != RAIL_EFR32_HANDLE) {
+    (void)RAIL_GetRadioEntropy(sRailHandle, (uint8_t *)(&entropy), sizeof(entropy));
+  }
+  return entropy;
 }
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(efr32_radio_process, ev, data)

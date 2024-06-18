@@ -98,28 +98,44 @@
 // [TIMER4]$
 
 // $[USART0]
-// USART0 CLK on PC03
-#ifndef USART0_CLK_PORT                         
-#define USART0_CLK_PORT                          gpioPortC
-#endif
-#ifndef USART0_CLK_PIN                          
-#define USART0_CLK_PIN                           3
-#endif
-
-// USART0 TX on PC01
-#ifndef USART0_TX_PORT                          
-#define USART0_TX_PORT                           gpioPortC
-#endif
-#ifndef USART0_TX_PIN                           
-#define USART0_TX_PIN                            1
-#endif
-
 // [USART0]$
 
 // $[I2C1]
 // [I2C1]$
 
 // $[EUSART1]
+// EUSART1 CS on PC00
+#ifndef EUSART1_CS_PORT                         
+#define EUSART1_CS_PORT                          gpioPortC
+#endif
+#ifndef EUSART1_CS_PIN                          
+#define EUSART1_CS_PIN                           0
+#endif
+
+// EUSART1 RX on PC02
+#ifndef EUSART1_RX_PORT                         
+#define EUSART1_RX_PORT                          gpioPortC
+#endif
+#ifndef EUSART1_RX_PIN                          
+#define EUSART1_RX_PIN                           2
+#endif
+
+// EUSART1 SCLK on PC03
+#ifndef EUSART1_SCLK_PORT                       
+#define EUSART1_SCLK_PORT                        gpioPortC
+#endif
+#ifndef EUSART1_SCLK_PIN                        
+#define EUSART1_SCLK_PIN                         3
+#endif
+
+// EUSART1 TX on PC01
+#ifndef EUSART1_TX_PORT                         
+#define EUSART1_TX_PORT                          gpioPortC
+#endif
+#ifndef EUSART1_TX_PIN                          
+#define EUSART1_TX_PIN                           1
+#endif
+
 // [EUSART1]$
 
 // $[EUSART2]

@@ -1,9 +1,9 @@
 /***************************************************************************//**
  * @file
- * @brief SPI abstraction used by memory lcd display
+ * @brief SPIDRV configuration file.
  *******************************************************************************
  * # License
- * <b>Copyright 2022 Silicon Laboratories Inc. www.silabs.com</b>
+ * <b>Copyright 2018 Silicon Laboratories Inc. www.silabs.com</b>
  *******************************************************************************
  *
  * SPDX-License-Identifier: Zlib
@@ -27,42 +27,17 @@
  * 3. This notice may not be removed or altered from any source distribution.
  *
  ******************************************************************************/
+#ifndef __SILICON_LABS_SPIDRV_CONFIG_H__
+#define __SILICON_LABS_SPIDRV_CONFIG_H__
 
-#ifndef SL_MEMLCD_CONFIG_H
-#define SL_MEMLCD_CONFIG_H
+/***************************************************************************//**
+ * @addtogroup spidrv
+ * @{
+ ******************************************************************************/
 
-// <<< sl:start pin_tool >>>
-// <usart signal=TX,CLK> SL_MEMLCD_SPI
-// $[USART_SL_MEMLCD_SPI]
-#ifndef SL_MEMLCD_SPI_PERIPHERAL                
-#define SL_MEMLCD_SPI_PERIPHERAL                 USART0
-#endif
-#ifndef SL_MEMLCD_SPI_PERIPHERAL_NO             
-#define SL_MEMLCD_SPI_PERIPHERAL_NO              0
-#endif
+/// SPIDRV configuration option. Use this define to include the slave part of the SPIDRV API.
+#define EMDRV_SPIDRV_INCLUDE_SLAVE
 
-// [USART_SL_MEMLCD_SPI]$
+/** @} (end addtogroup spidrv) */
 
-// <gpio> SL_MEMLCD_SPI_CS
-// $[GPIO_SL_MEMLCD_SPI_CS]
-#ifndef SL_MEMLCD_SPI_CS_PORT                   
-#define SL_MEMLCD_SPI_CS_PORT                    gpioPortC
-#endif
-#ifndef SL_MEMLCD_SPI_CS_PIN                    
-#define SL_MEMLCD_SPI_CS_PIN                     8
-#endif
-// [GPIO_SL_MEMLCD_SPI_CS]$
-
-// <gpio optional=true> SL_MEMLCD_EXTCOMIN
-// $[GPIO_SL_MEMLCD_EXTCOMIN]
-#ifndef SL_MEMLCD_EXTCOMIN_PORT                 
-#define SL_MEMLCD_EXTCOMIN_PORT                  gpioPortC
-#endif
-#ifndef SL_MEMLCD_EXTCOMIN_PIN                  
-#define SL_MEMLCD_EXTCOMIN_PIN                   6
-#endif
-// [GPIO_SL_MEMLCD_EXTCOMIN]$
-
-// <<< sl:end pin_tool >>>
-
-#endif
+#endif /* __SILICON_LABS_SPIDRV_CONFIG_H__ */

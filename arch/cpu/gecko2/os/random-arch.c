@@ -52,6 +52,9 @@
 #include "em_system.h"
 
 /*---------------------------------------------------------------------------*/
+uint32_t efr32_rail_entropy(void);
+
+/*---------------------------------------------------------------------------*/
 /**
  * @brief Generates a new random number
  * @return The random number.
@@ -71,7 +74,8 @@ random_init(unsigned short seed)
 {
   (void)seed;
   uint32_t entropy;
-  (void)RAIL_GetRadioEntropy(RAIL_EFR32_HANDLE, (uint8_t *)(&entropy), sizeof(entropy));
+
+  entropy = efr32_rail_entropy();
 
   /* If RAIL does not provide an entropy. */
   /* Use system unique as entropy */

@@ -56,7 +56,7 @@
 
 #include "sys/log.h"
 #define LOG_MODULE "MPL"
-#define LOG_LEVEL LOG_LEVEL_NONE
+#define LOG_LEVEL LOG_LEVEL_WARN
 
 /*---------------------------------------------------------------------------*/
 /* Check Parameters are Correct */

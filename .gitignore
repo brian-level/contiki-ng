@@ -12,6 +12,7 @@
 *.ihex
 *.pyc
 *~
+*.bak
 build/*
 Makefile.target
 Makefile.*.defines

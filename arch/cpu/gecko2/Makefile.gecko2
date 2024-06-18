@@ -11,6 +11,12 @@ ifndef DEVICE_SERIES
     DEVICE_SERIES=2
 endif
 
+ifndef BOOT_LOADABLE
+    BOOTLOADEXT=
+else
+    BOOTLOADEXT=_bl
+endif
+
 ifndef RAIL_CPU
     $(error RAIL_CPU not defined!)
 endif
@@ -24,7 +30,7 @@ DEVICE_OPN_UPPER = $(shell echo $(DEVICE_OPN) | tr a-z A-Z)
 DEVICE_SERIES_LOWER = s$(DEVICE_SERIES)
 
 # OPN Specific
-LDSCRIPT ?= $(CONTIKI_CPU)/$(DEVICE_OPN)/$(DEVICE_FAMILY_LOWER).ld
+LDSCRIPT ?= $(CONTIKI_CPU)/$(DEVICE_OPN)/$(DEVICE_FAMILY_LOWER)$(BOOTLOADEXT).ld
 GSDK_C_SRCS += $(CONTIKI_CPU)/$(DEVICE_OPN)/sl_device_init_clocks.c
 ifdef CUSTOM_PHY
 GSDK_C_SRCS += $(CONTIKI_CPU)/$(DEVICE_OPN)/$(CUSTOM_PHY).c
@@ -42,6 +48,8 @@ else
     GSDK_C_SRCS += $(CONTIKI_CPU)/autogen/sl_uartdrv_init.c
     CFLAGS += -DUART_USE_IOSTREAM=0
 endif
+
+GSDK_C_SRCS += $(CONTIKI_CPU)/autogen/sl_spidrv_init.c
 
 CFLAGS += -DCPU_CONF_PATH=\"$(DEVICE_OPN)-conf.h\"
 
@@ -101,6 +109,12 @@ GSDK_INC_PATHS += $(GSDK_ROOT)/platform/emdrv/dmadrv/inc
 GSDK_C_SRCS += $(GSDK_ROOT)/platform/emdrv/gpiointerrupt/src/gpiointerrupt.c
 GSDK_SRC_PATHS += $(GSDK_ROOT)/platform/emdrv/gpiointerrupt/src
 GSDK_INC_PATHS += $(GSDK_ROOT)/platform/emdrv/gpiointerrupt/inc
+
+#### spidrv
+GSDK_C_SRCS += $(GSDK_ROOT)/platform/emdrv/dmadrv/src/spidrv.c
+GSDK_SRC_PATHS += $(GSDK_ROOT)/platform/emdrv/spidrv/src
+GSDK_INC_PATHS += $(GSDK_ROOT)/platform/emdrv/spidrv/inc
+GSDK_INC_PATHS += $(GSDK_ROOT)/platform/radio/rail_lib/hal
 
 ### emlib
 GSDK_C_SRCS += $(GSDK_ROOT)/platform/emlib/src/em_cmu.c

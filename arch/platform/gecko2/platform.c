@@ -53,6 +53,7 @@
 #include "sl_mpu.h"
 #include "sl_power_manager.h"
 #include "sl_sleeptimer.h"
+#include "sl_spidrv_instances.h"
 #include "dev/uart-arch.h"
 #include "dev/gpio-hal.h"
 #include "dev/button-hal.h"
@@ -107,8 +108,7 @@ platform_init_stage_two(void)
 
   button_hal_init();
 
-//  random_init(0x5678);
-
+  sl_spidrv_init_instances();
   uart_init();
   serial_line_init();
 
@@ -122,6 +122,7 @@ platform_init_stage_two(void)
 void
 platform_init_stage_three(void)
 {
+  random_init(0x5678);
 }
 /*---------------------------------------------------------------------------*/
 void
