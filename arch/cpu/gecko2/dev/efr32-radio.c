@@ -139,6 +139,8 @@ static uint16_t panid = 0xabcd;
 static int channel = IEEE802154_DEFAULT_CHANNEL;
 static int cca_threshold = -85;
 static RAIL_TxOptions_t txOptions = RAIL_TX_OPTIONS_DEFAULT;
+static RAIL_TxPowerConfig_t sTxPowerConfig = {SL_RAIL_UTIL_PA_SELECTION_2P4GHZ, SL_RAIL_UTIL_PA_VOLTAGE_MV,
+                                          SL_RAIL_UTIL_PA_RAMP_TIME_US};
 volatile tx_status_t tx_status;
 volatile int64_t is_receiving = 0;
 /*---------------------------------------------------------------------------*/
@@ -380,17 +382,10 @@ init(void)
   status = RAIL_IEEE802154_SetPtiRadioConfig(sRailHandle, RAIL_IEEE802154_PTI_RADIO_CONFIG_915MHZ_R23_NA_EXT);
 #endif
 #ifdef RAIL_SUBGHZ
+  sTxPowerConfig.mode = SL_RAIL_UTIL_PA_SELECTION_SUBGHZ;
   status = RAIL_IEEE802154_ConfigGOptions(sRailHandle,
                                         RAIL_IEEE802154_G_OPTION_GB868,
                                         RAIL_IEEE802154_G_OPTION_GB868);
-  /*
-  status = RAIL_IEEE802154_ConfigGB915MHzRadio(sRailHandle);
-  if(status != RAIL_STATUS_NO_ERROR) {
-    (void)RAIL_IEEE802154_Deinit(sRailHandle);
-    LOG_ERR("RAIL_IEEE802154_Config915MhzRadio failed, return value: %d", status);
-    return 0;
-  }
-  */
 #else
   status = RAIL_IEEE802154_Config2p4GHzRadio(sRailHandle);
   if(status != RAIL_STATUS_NO_ERROR) {
@@ -399,6 +394,25 @@ init(void)
     return 0;
   }
 #endif
+  /* configure tx power */
+  RAIL_TxPowerLevel_t tx_power_lvl = RAIL_GetTxPower(sRailHandle);
+  RAIL_TxPower_t      tx_power_dbm = 0;
+
+  if (tx_power_lvl != RAIL_TX_POWER_LEVEL_INVALID) {
+      tx_power_dbm = RAIL_GetTxPowerDbm(sRailHandle);
+  }
+  status = RAIL_ConfigTxPower(sRailHandle, &sTxPowerConfig);
+  if(status != RAIL_STATUS_NO_ERROR) {
+    LOG_ERR("RAIL_ConfigTxPower failed, return value: %d", status);
+    return 0;
+  }
+  status = RAIL_SetTxPowerDbm(sRailHandle, tx_power_dbm);
+  if(status != RAIL_STATUS_NO_ERROR) {
+    LOG_ERR("RAIL_ConfigTxPower failed, return value: %d", status);
+    return 0;
+  }
+  LOG_INFO("RAIL TxPower %d dbm (*10)", (int)tx_power_dbm);
+
   /* configures the channels */
   (void)RAIL_ConfigChannels(sRailHandle,
                             phy,
@@ -475,6 +489,8 @@ init(void)
 static radio_result_t
 get_value(radio_param_t param, radio_value_t *value)
 {
+  RAIL_Status_t status;
+
   if(!value) {
     return RADIO_RESULT_INVALID_VALUE;
   }
@@ -523,6 +539,10 @@ get_value(radio_param_t param, radio_value_t *value)
     }
     return RADIO_RESULT_ERROR;
   }
+  case RADIO_PARAM_TXPOWER:
+    *value =  RAIL_GetTxPowerDbm(sRailHandle) / 10;
+    /* RAIL TxPower is in deci-dbm */
+    return RADIO_RESULT_OK;
   }
   return RADIO_RESULT_NOT_SUPPORTED;
 }
@@ -530,6 +550,8 @@ get_value(radio_param_t param, radio_value_t *value)
 static radio_result_t
 set_value(radio_param_t param, radio_value_t value)
 {
+  RAIL_Status_t status;
+
   switch(param) {
   case RADIO_PARAM_CHANNEL:
     if(value < CHANNEL_MIN ||
@@ -538,7 +560,7 @@ set_value(radio_param_t param, radio_value_t value)
     }
     channel = value;
     /* start receiving on that channel */
-    const RAIL_Status_t status = RAIL_StartRx(sRailHandle, channel, NULL);
+    status = RAIL_StartRx(sRailHandle, channel, NULL);
     if(status != RAIL_STATUS_NO_ERROR) {
       LOG_ERR("Could not start RX on channel %d\n", channel);
       return RADIO_RESULT_ERROR;
@@ -581,6 +603,15 @@ set_value(radio_param_t param, radio_value_t value)
     }
 
     send_on_cca = (value & RADIO_TX_MODE_SEND_ON_CCA) != 0;
+    return RADIO_RESULT_OK;
+  case RADIO_PARAM_TXPOWER:
+    if(value < -60 || value > 21) {
+      return RADIO_RESULT_INVALID_VALUE;
+    }
+    status = RAIL_SetTxPowerDbm(sRailHandle, value * 10);
+    if(status != RAIL_STATUS_NO_ERROR) {
+      return RADIO_RESULT_INVALID_VALUE;
+    }
     return RADIO_RESULT_OK;
   }
   return RADIO_RESULT_NOT_SUPPORTED;

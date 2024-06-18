@@ -15,6 +15,10 @@ ifndef BOOT_LOADABLE
     BOOTLOADEXT=
 else
     BOOTLOADEXT=_bl
+    CFLAGS += -DSL_APP_PROPERTIES
+    GSDK_C_SRCS += $(GSDK_ROOT)/platform/bootloader/app_properties/app_properties.c
+    GSDK_SRC_PATHS += $(GSDK_ROOT)/platform/bootloader/app_properties
+    GSDK_INC_PATHS += $(GSDK_ROOT)/platform/bootloader
 endif
 
 ifndef RAIL_CPU
