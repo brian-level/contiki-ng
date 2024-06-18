@@ -4,7 +4,7 @@ endif
 
 ### Board and BSP selection
 BOARD ?= brd4210a
-BOARDS = brd4210a
+BOARDS = brd4210a sgdvt atdvt
 
 ### Unless the example dictates otherwise, build with code size optimisations switched off
 SMALL ?= 0
