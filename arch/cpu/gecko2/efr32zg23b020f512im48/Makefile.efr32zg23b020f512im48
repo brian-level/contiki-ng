@@ -6,12 +6,25 @@ RAIL_CPU := efr32xg23
 RAIL_FAMILY := efr32xg2x
 CUSTOM_PHY := rail_config
 
-CFLAGS += -g -gdwarf-2 -mfpu=fpv5-sp-d16  -mfloat-abi=hard -mcmse -DCUSTOM_PHY -DRAIL_SUBGHZ -DIEEE802154_CONF_DEFAULT_CHANNEL=12 -DSL_RAIL_LIB_MULITPROTOCOL_SUPPORT=0
+CFLAGS += -mfpu=fpv5-sp-d16 -mfloat-abi=hard -mcmse
+CFLAGS += -DCUSTOM_PHY -DRAIL_SUBGHZ
+CFLAGS += -DIEEE802154_CONF_DEFAULT_CHANNEL=2 -DSL_RAIL_LIB_MULITPROTOCOL_SUPPORT=0
 
-LDFLAGS += -g -gdwarf-2 -mfpu=fpv5-sp-d16 -mfloat-abi=hard -mcmse
+ifdef DEBUG
+    SANITIZE_FLAGS=-fstack-protector-all -fsanitize=pointer-overflow -fsanitize=null -fsanitize=builtin -fsanitize-undefined-trap-on-error
+    CFLAGS += -g -gdwarf-2
+    CFLAGS += -DINTERNAL -D__FILENAME__=__FILE__
+else
+    CFLAGS += -Os
+endif
+
+CFLAGS+=${SANTIZE_FLAGS}
+
+LDFLAGS += -g -gdwarf-2 -mfpu=fpv5-sp-d16 -mfloat-abi=hard -mcmse ${SANTIZE_FLAGS}
 
 include $(CONTIKI_CPU)/Makefile.gecko2
 
 include $(CONTIKI)/$(CONTIKI_NG_CM33_DIR)/Makefile.cm33
 
 include $(CONTIKI_CPU)/Makefile.commander
+
