@@ -235,6 +235,15 @@ handle_receive(void)
   if(rx_buf != NULL) {
     rx_buf->len = length;
 
+    uint16_t tot = packet_info.firstPortionBytes;
+    if(packet_info.lastPortionData != NULL) {
+      tot += packet_info.packetBytes - packet_info.firstPortionBytes;
+    }
+    if(tot > PACKETBUF_SIZE) {
+      /* dont blow the stack */
+      LOG_ERR("Rx packet too big\n");
+      return;
+    }
     /* read packet into buffer */
     memcpy(rx_buf->buf, packet_info.firstPortionData,
            packet_info.firstPortionBytes);
@@ -339,8 +348,6 @@ init(void)
   sl_rail_util_pti_init();
   sl_rail_util_rf_path_init();
   sl_rail_util_rssi_init();
-
-  //RAIL_UseDma(RAIL_DMA_INVALID);
 
   /* initializes the RAIL core */
   sRailHandle = RAIL_Init(&rail_config,
@@ -786,6 +793,14 @@ read(void *buf, unsigned short bufsize)
   len = rx_buf->len;
   /* Convert from rail time domain to rtimer domain */
   last_rx_time = RTIMER_NOW() - US_TO_RTIMERTICKS(RAIL_GetTime() - rx_buf->timestamp);
+  if (len > PACKETBUF_SIZE) {
+    LOG_ERR("packet len corrupt, truncating\n");
+    len = PACKETBUF_SIZE;
+  }
+  if (len > bufsize) {
+    LOG_WARN("packet bigger than read size, trumcating\n");
+    len = bufsize;
+  }
   memcpy(buf, rx_buf->buf, len);
   last_rssi = rx_buf->rssi;
   last_lqi = rx_buf->lqi;
