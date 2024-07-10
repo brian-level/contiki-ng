@@ -41,7 +41,7 @@
  * \file
  *         UART header file for the gecko.
  * \author
- *         Yago Fontoura do Rosario <yago.rosario@hotmail.com.br>
+ *         Brian Dodge <bdodge09@gmail.com>
  *
  */
 /*---------------------------------------------------------------------------*/
@@ -61,6 +61,12 @@
  *
  */
 #define UART_USE_LDMA (0)
+/*---------------------------------------------------------------------------*/
+/**
+ * @brief define this non-0 to use a larger uart isr buffer and handle del char
+ *        (if using ISR driven Rx)
+ */
+#define UART_LINE_EDIT (1)
 /*---------------------------------------------------------------------------*/
 /**
  * @brief check for rx chars

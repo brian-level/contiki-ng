@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Yago Fontoura do Rosario <yago.rosario@hotmail.com.br>
+ * Copyright (C) 2022 Brian Dodge <bdodge09@gmail.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -121,26 +121,36 @@ receive_callback(UARTDRV_HandleData_t *handle, Ecode_t transferStatus,
 #else
 #include "sl_uartdrv_usart_vcom_config.h"
 #include "int-master.h"
+#if UART_LINE_EDIT
+  #define UART_RX_BUF_SIZE 80
+#else
+  #define UART_RX_BUF_SIZE 16
+#endif
 /*---------------------------------------------------------------------------*/
-static uint8_t rx_data[32];
+static uint8_t rx_data[UART_RX_BUF_SIZE];
 static int rxhead, rxtail, rxcount, rxsize = sizeof(rx_data);
+static bool rxnewline;
 /*---------------------------------------------------------------------------*/
 void
 uart_poll_rx(void)
 {
   if(input_handler) {
-    while (rxcount > 0) {
-      if (UART_ECHO) {
-        uart_write(&rx_data[rxtail], 1);
+    if(!UART_LINE_EDIT || rxnewline)
+    {
+      rxnewline = false;
+      while (rxcount > 0) {
+        if (!UART_LINE_EDIT && UART_ECHO) {
+          uart_write(&rx_data[rxtail], 1);
+        }
+        input_handler(rx_data[rxtail]);
+        int_master_status_t is = int_master_read_and_disable();
+        rxtail++;
+        if(rxtail >= rxsize) {
+          rxtail = 0;
+        }
+        rxcount--;
+        int_master_status_set(is);
       }
-      input_handler(rx_data[rxtail]);
-      int_master_status_t is = int_master_read_and_disable();
-      rxtail++;
-      if(rxtail >= rxsize) {
-        rxtail = 0;
-      }
-      rxcount--;
-      int_master_status_set(is);
     }
   }
 }
@@ -152,6 +162,28 @@ void USART0_RX_IRQHandler(void)
   {
     uint8_t rxData = USART_Rx(USART0);
     USART_IntClear(USART0, USART_IF_RXDATAV);
+    if (UART_LINE_EDIT) {
+      if (rxData == 0x8) {
+        if (rxcount > 0) {
+          rxcount--;
+          if(rxhead == 0) {
+            rxhead = rxsize - 1;
+          }
+          else {
+            rxhead--;
+          }
+        }
+        if (UART_ECHO) {
+          uart_write(&rxData, 1);
+          uart_write(" ", 1);
+          uart_write(&rxData, 1);
+        }
+        return;
+      }
+    }
+    if (UART_LINE_EDIT && UART_ECHO) {
+      uart_write(&rxData, 1);
+    }
     rx_data[rxhead++] = rxData;
     if (rxhead >= rxsize) {
       rxhead = 0;
@@ -159,6 +191,7 @@ void USART0_RX_IRQHandler(void)
     if (rxcount < rxsize) {
       rxcount++;
     }
+    rxnewline |= rxData == '\r';
   }
 }
 #endif
