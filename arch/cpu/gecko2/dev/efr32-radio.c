@@ -50,7 +50,7 @@
 /* Log configuration */
 #include "sys/log.h"
 #define LOG_MODULE "EFR32"
-#define LOG_LEVEL LOG_LEVEL_WARN
+#define LOG_LEVEL LOG_CONF_LEVEL_EFR32
 
 enum {
   IEEE802154_ACK_REQUEST     = 1 << 5,
@@ -110,10 +110,12 @@ static RAIL_IEEE802154_Config_t rail_ieee802154_config = {
     .ackTimeout = 672,
     .rxTransitions = {
       .success = RAIL_RF_STATE_RX,
+//      .error = RAIL_RF_STATE_RX
       .error = RAIL_RF_STATE_IDLE
     },
     .txTransitions = {
       .success = RAIL_RF_STATE_RX,
+//      .error = RAIL_RF_STATE_RX
       .error = RAIL_RF_STATE_IDLE
     }
   },
@@ -176,6 +178,9 @@ configure_radio_interrupts(void)
   rail_status = RAIL_ConfigEvents(sRailHandle, RAIL_EVENTS_ALL,
                                   RAIL_EVENT_RX_SYNC1_DETECT |
                                   RAIL_EVENT_RX_SYNC2_DETECT |
+                                  RAIL_EVENTS_RX_COMPLETION |
+                                  RAIL_EVENTS_TX_COMPLETION |
+                                  /*
                                   RAIL_EVENT_RX_ACK_TIMEOUT |
                                   RAIL_EVENT_RX_FRAME_ERROR |
                                   RAIL_EVENT_RX_PACKET_RECEIVED |
@@ -187,6 +192,7 @@ configure_radio_interrupts(void)
                                   RAIL_EVENT_TX_ABORTED |
                                   RAIL_EVENT_TX_BLOCKED |
                                   RAIL_EVENT_TX_UNDERFLOW |
+                                  */
                                   RAIL_EVENT_CAL_NEEDED);
 
   if(rail_status != RAIL_STATUS_NO_ERROR) {
@@ -269,29 +275,35 @@ handle_receive(void)
 static void
 rail_events_cb(RAIL_Handle_t rail_handle, RAIL_Events_t events)
 {
-  if(events & (RAIL_EVENT_TX_ABORTED | RAIL_EVENT_TX_BLOCKED | RAIL_EVENT_TX_UNDERFLOW)) {
+  if(events & RAIL_EVENTS_TX_COMPLETION) {
     if (events & RAIL_EVENT_TX_ABORTED) {
       LOG_INFO("EFR32 Radio: TX Aborted.\n");
+      tx_status = TX_ERROR;
     }
     if (events & RAIL_EVENT_TX_BLOCKED) {
       LOG_INFO("EFR32 Radio: TX Blocked.\n");
+      tx_status = TX_ERROR;
     }
     if (events & RAIL_EVENT_TX_UNDERFLOW) {
       LOG_INFO("EFR32 Radio: TX Underflow.\n");
+      tx_status = TX_ERROR;
     }
-    tx_status = TX_ERROR;
+    if(events & RAIL_EVENT_TX_CHANNEL_BUSY) {
+      tx_status = TX_CHANNEL_BUSY;
+    }
+    if(events & RAIL_EVENT_TX_PACKET_SENT) {
+      LOG_INFO("EFR32 Radio: packet sent\n");
+      tx_status = TX_SENT;
+    }
   }
 
   if(events & RAIL_EVENT_RX_ACK_TIMEOUT) {
     LOG_INFO("EFR32 Radio: Ack Timeout.\n");
+    is_receiving = 0;
     tx_status = TX_NO_ACK;
   }
 
-  if(events & (RAIL_EVENT_RX_FIFO_OVERFLOW
-               | RAIL_EVENT_RX_ADDRESS_FILTERED
-               | RAIL_EVENT_RX_PACKET_ABORTED
-               | RAIL_EVENT_RX_FRAME_ERROR
-               | RAIL_EVENT_RX_PACKET_RECEIVED)) {
+  if (events & RAIL_EVENTS_RX_COMPLETION) {
     is_receiving = 0;
     if(events & RAIL_EVENT_RX_PACKET_RECEIVED) {
       RAIL_HoldRxPacket(rail_handle);
@@ -300,15 +312,6 @@ rail_events_cb(RAIL_Handle_t rail_handle, RAIL_Events_t events)
         process_poll(&efr32_radio_process);
       }
     }
-  }
-
-  if(events & RAIL_EVENT_TX_PACKET_SENT) {
-    LOG_INFO("EFR32 Radio: packet sent\n");
-    tx_status = TX_SENT;
-  }
-
-  if(events & RAIL_EVENT_TX_CHANNEL_BUSY) {
-    tx_status = TX_CHANNEL_BUSY;
   }
 
   if(events & (RAIL_EVENT_RX_SYNC1_DETECT | RAIL_EVENT_RX_SYNC2_DETECT)) {
@@ -720,9 +723,15 @@ transmit(unsigned short transmit_len)
                           US_TO_RTIMERTICKS(RADIO_BYTE_AIR_TIME * frame_length + 300));
   } else {
     /* Wait for the transmission. */
-    while(tx_status == TX_SENDING);
-
-
+    for (int64_t is_transmitting = uptime_get(); tx_status == TX_SENDING;) {
+      if ((uptime_get() - is_transmitting) > 2000)
+      {
+        /* don't let tx state hang forever */
+        LOG_WARN("tx state timedout, aborting\n");
+        RAIL_Idle(sRailHandle, RAIL_IDLE_ABORT, true);
+        tx_status = TX_ERROR;
+      }
+    }
   }
 
   if(tx_status == TX_SENT) {
@@ -767,11 +776,31 @@ receiving_packet(void)
   {
     return false;
   }
-
-  if ((uptime_get() - is_receiving) > 400)
+#if 1 // this can hang
+  if ((RAIL_GetRadioState(sRailHandle) & RAIL_RF_STATE_RX_ACTIVE) != RAIL_RF_STATE_RX_ACTIVE)
   {
-    LOG_INFO("rx state timedout");
     is_receiving = 0;
+  }
+#endif
+  else if((uptime_get() - is_receiving) > 2000)
+  {
+    RAIL_Status_t status;
+#if 1 // this hangs
+    LOG_WARN("rx state timedout, aborting\n");
+    RAIL_Idle(sRailHandle, RAIL_IDLE, true);
+    is_receiving = 0;
+#else
+    /* don't let rx state hang forever, and need to tell rail to stop rx or
+     * all tx will hang forever */
+    LOG_WARN("rx state timedout, aborting\n");
+    RAIL_Idle(sRailHandle, RAIL_IDLE_ABORT, true);
+    is_receiving = 0;
+    status = RAIL_StartRx(sRailHandle, channel, NULL);
+    if(status != RAIL_STATUS_NO_ERROR) {
+      LOG_ERR("Could not start RX on channel %d\n", channel);
+      return RADIO_RESULT_ERROR;
+    }
+#endif
   }
 
   return is_receiving != 0;
@@ -798,7 +827,7 @@ read(void *buf, unsigned short bufsize)
     len = PACKETBUF_SIZE;
   }
   if (len > bufsize) {
-    LOG_WARN("packet bigger than read size, trumcating\n");
+    LOG_WARN("packet bigger than read size, truncating\n");
     len = bufsize;
   }
   memcpy(buf, rx_buf->buf, len);
@@ -815,6 +844,16 @@ read(void *buf, unsigned short bufsize)
 static int
 pending_packet(void)
 {
+  /*
+  if (RAIL_GetRadioState(sRailHandle) == RAIL_RF_STATE_IDLE) {
+    RAIL_Status_t status;
+    LOG_WARN("Restarting Rx from Idle\n");
+    status = RAIL_StartRx(sRailHandle, channel, NULL);
+    if(status != RAIL_STATUS_NO_ERROR) {
+      LOG_ERR("RAIL_Start***Rx status: %d failed\n", status);
+    }
+  }
+  */
   handle_receive();
 
   return has_packet();
