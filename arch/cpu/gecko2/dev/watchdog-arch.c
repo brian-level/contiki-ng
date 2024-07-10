@@ -86,7 +86,7 @@ watchdog_init(void)
 void
 watchdog_start(void)
 {
-  WDOGn_Enable(WDOG0, true);
+//  WDOGn_Enable(WDOG0, true);
 }
 /*---------------------------------------------------------------------------*/
 void
