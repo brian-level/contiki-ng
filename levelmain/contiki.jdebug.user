@@ -1,0 +1,32 @@
+
+
+OpenDocument="em_eusart.h", FilePath="/home/bdodge/contiki-ng/arch/cpu/gecko2/lib/gecko_sdk/platform/emlib/inc/em_eusart.h", Line=1114
+OpenDocument="tcpip.c", FilePath="/home/bdodge/contiki-ng/os/net/ipv6/tcpip.c", Line=783
+OpenDocument="uip6.c", FilePath="/home/bdodge/contiki-ng/os/net/ipv6/uip6.c", Line=2312
+OpenDocument="list.h", FilePath="/home/bdodge/contiki-ng/os/lib/list.h", Line=273
+OpenDocument="uip-ds6.c", FilePath="/home/bdodge/contiki-ng/os/net/ipv6/uip-ds6.c", Line=469
+OpenDocument="mpl.c", FilePath="/home/bdodge/contiki-ng/os/net/ipv6/multicast/mpl.c", Line=1484
+OpenDocument="startup_efr32zg23.c", FilePath="/home/bdodge/contiki-ng/arch/cpu/gecko2/lib/gecko_sdk/platform/Device/SiliconLabs/EFR32ZG23/Source/startup_efr32zg23.c", Line=382
+OpenDocument="contiki-main.c", FilePath="/home/bdodge/contiki-ng/os/contiki-main.c", Line=65
+OpenToolbar="Debug", Floating=0, x=0, y=0
+OpenWindow="Call Stack", DockArea=RIGHT, x=0, y=2, w=643, h=234, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Registers 1", DockArea=RIGHT, x=0, y=3, w=643, h=136, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, FilteredItems=[], RefreshRate=1
+OpenWindow="Source Files", DockArea=LEFT, x=0, y=1, w=446, h=179, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Disassembly", DockArea=RIGHT, x=0, y=1, w=643, h=234, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Break & Tracepoints", DockArea=LEFT, x=0, y=2, w=446, h=273, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, VectorCatchIndexMask=254
+OpenWindow="Memory 1", DockArea=BOTTOM, x=1, y=0, w=1075, h=318, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=1, EditorAddress=0x50008064
+OpenWindow="Watched Data 1", DockArea=LEFT, x=0, y=0, w=446, h=89, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Functions", DockArea=LEFT, x=0, y=3, w=446, h=183, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Console", DockArea=BOTTOM, x=0, y=0, w=1084, h=318, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="RTOS", DockArea=RIGHT, x=0, y=0, w=643, h=120, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, Showing=""
+SmartViewPlugin="", Page="", Toolbar="Hidden", Window="SmartView 1"
+TableHeader="Vector Catches", SortCol="", SortOrder="ASCENDING", VisibleCols=["";"Vector Catch";"Description"], ColWidths=[50;300;500]
+TableHeader="Break & Tracepoints", SortCol="", SortOrder="ASCENDING", VisibleCols=["";"Type";"Location";"Extras"], ColWidths=[100;100;100;146]
+TableHeader="Functions", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Address";"Size";"#Insts";"Source"], ColWidths=[483;100;100;100;245]
+TableHeader="Call Stack", SortCol="Function", SortOrder="ASCENDING", VisibleCols=["Function";"Stack Frame";"Source";"PC";"Return Address";"Stack Used"], ColWidths=[183;112;100;100;168;100]
+TableHeader="Source Files", SortCol="File", SortOrder="ASCENDING", VisibleCols=["File";"Status";"Size";"#Insts";"Path"], ColWidths=[225;100;100;100;889]
+TableHeader="Power Sampling", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Index";"Time";"Ch 0"], ColWidths=[100;100;100]
+TableHeader="Registers 1", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Description"], ColWidths=[100;105;438]
+TableHeader="Watched Data 1", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Value";"Location";"Refresh"], ColWidths=[152;100;100;100]
+TableHeader="RegisterSelectionDialog", SortCol="None", SortOrder="ASCENDING", VisibleCols=[], ColWidths=[]
+TableHeader="TargetExceptionDialog", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Address";"Description"], ColWidths=[200;100;100;605]

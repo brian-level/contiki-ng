@@ -1,0 +1,2 @@
+./flashcontiki.sh sgdvt
+
